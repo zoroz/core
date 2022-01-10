@@ -48,6 +48,7 @@ async def test_alexa_config_expose_entity_prefs(hass, cloud_prefs, cloud_stub):
         alexa_entity_configs={"light.kitchen": entity_conf},
         alexa_default_expose=["light"],
         alexa_enabled=True,
+        alexa_report_state=False,
     )
     conf = alexa_config.AlexaConfig(
         hass, ALEXA_SCHEMA({}), "mock-user-id", cloud_prefs, cloud_stub
@@ -89,8 +90,8 @@ async def test_alexa_config_report_state(hass, cloud_prefs, cloud_stub):
     )
     await conf.async_initialize()
 
-    assert cloud_prefs.alexa_report_state is False
-    assert conf.should_report_state is False
+    assert cloud_prefs.alexa_report_state is True
+    assert conf.should_report_state is True
     assert conf.is_reporting_states is False
 
     with patch.object(conf, "async_get_access_token", AsyncMock(return_value="hello")):
@@ -169,6 +170,9 @@ def patch_sync_helper():
 
 async def test_alexa_update_expose_trigger_sync(hass, cloud_prefs, cloud_stub):
     """Test Alexa config responds to updating exposed entities."""
+    await cloud_prefs.async_update(
+        alexa_report_state=False,
+    )
     await alexa_config.AlexaConfig(
         hass, ALEXA_SCHEMA({}), "mock-user-id", cloud_prefs, cloud_stub
     ).async_initialize()
