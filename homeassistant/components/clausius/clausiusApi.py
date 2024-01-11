@@ -59,7 +59,7 @@ class clausiusApi:
                 for sensor in self._attr_json_data["relays"]
             ]
             self._attr_circuits = [
-                MyClimateControl(sensor["code"], 20)
+                MyClimateControl(sensor["code"], 20, self)
                 for sensor in self._attr_json_data["circuits"]
             ]
 
@@ -86,3 +86,18 @@ class clausiusApi:
             A list of MyClimateControl objects representing the circuits.
         """
         return self._attr_circuits
+
+    async def async_set_temperature(self, entityId: str, temperature: float) -> None:
+        """Set the temperature for a circuit.
+
+        Args:
+            entityId (str): The id of the circuit.
+            temperature (float): The temperature to set.
+        """
+        try:
+            async with aiohttp.ClientSession() as session, session.get(
+                f"{self.base_url}/gwd/clausius/{entityId}/temperature?temperature={temperature}"
+            ) as response:
+                response.raise_for_status()
+        except aiohttp.ClientError as e:
+            logging.error("Failed to get data from API: %s", e)

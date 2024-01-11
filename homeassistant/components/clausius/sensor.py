@@ -8,7 +8,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from . import DOMAIN
 
 
-def setup_platform(
+async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     add_entities: AddEntitiesCallback,

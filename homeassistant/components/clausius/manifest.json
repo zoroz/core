@@ -5,5 +5,5 @@
   "dependencies": [],
   "documentation": "https://www.home-assistant.io/integrations/clausius",
   "iot_class": "local_polling",
-  "requirements": ["aiohttp==3.7.4"]
+  "requirements": ["aiohttp==3.9.1"]
 }

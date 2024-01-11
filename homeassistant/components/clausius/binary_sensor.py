@@ -26,4 +26,4 @@ async def async_setup_platform(
     :param discovery_info: Optional discovery information.
     """
     api = hass.data[DOMAIN]
-    add_entities(await api.get_relays())
+    add_entities(api.get_relays())

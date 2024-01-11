@@ -9,60 +9,79 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 
-_LOGGER = logging.getLogger(__name__)
-
 
 class MyClimateControl(ClimateEntity):
     """Representation of a Sensor."""
 
-    def __init__(self, code, temperature) -> None:
+    _attr_hvac_modes = [HVACMode.HEAT]
+    _attr_hvac_mode = HVACMode.HEAT
+    _attr_max_temp = 35
+    _attr_min_temp = 5
+    _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
+    _attr_target_temperature_step = 1
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+
+    def __init__(self, code, temperature, api) -> None:
         """Initialize the climate control."""
+        self._api = api
         self._name = code
-        self._temperature = temperature
-        self.unique_id = "clausius_" + code
-        self._attr_unique_id = self.unique_id
-        self._attr_min_temp = 15
-        self._attr_max_temp = 30
+        self._attr_current_temperature = temperature
+        self._attr_unique_id = "clausius_" + code
+        self._target_temperature = temperature
+        # self._target_temperature_high = temperature
+        # self._target_temperature_low = temperature
+        self._current_temperature = temperature
 
     @property
     def name(self) -> str:
-        """Return the name of the climate control."""
+        """Return name."""
         return self._name
 
     @property
-    def temperature(self) -> float | None:
+    def current_temperature(self) -> float:
         """Return the current temperature."""
-        return self._temperature
+        return self._current_temperature
 
     @property
-    def current_temperature(self) -> float | None:
-        """Return the current temperature."""
-        return self._temperature
+    def target_temperature(self) -> float:
+        """Return the temperature we try to reach."""
+        return self._target_temperature
 
-    @property
-    def temperature_unit(self) -> UnitOfTemperature:
-        """Return the unit of measurement."""
-        return UnitOfTemperature.CELSIUS
+    # @property
+    # def target_temperature_high(self) -> float | None:
+    #     """Return the highbound target temperature we try to reach."""
+    #     return self._target_temperature_high
 
-    @property
-    def hvac_mode(self) -> HVACMode:
-        """Return the current HVAC mode."""
-        return HVACMode.HEAT
+    # @property
+    # def target_temperature_low(self) -> float | None:
+    #     """Return the lowbound target temperature we try to reach."""
+    #     return self._target_temperature_low
 
-    @property
-    def hvac_modes(self) -> list[HVACMode]:
-        """Return the list of available HVAC modes."""
-        return [HVACMode.HEAT]
+    async def async_update(self) -> None:
+        """Fetch new state data for this entity.
 
-    @property
-    def supported_features(self) -> ClimateEntityFeature:
-        """Return the list of supported features."""
-        return ClimateEntityFeature.TARGET_TEMPERATURE
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        logging.info("Fetching new state data for %s", self.name)
+        await self._api.async_set_temperature(self._name, self._target_temperature)
+        # Here you would add the code to fetch the current state of your device
+        # For example:
+        # self._temperature = await self._device.get_temperature()
+        # self._hvac_mode = await self._device.get_hvac_mode()
 
-    def set_temperature(self, **kwargs: Any) -> None:
+    async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
         temperature = kwargs.get(ATTR_TEMPERATURE)
-        _LOGGER.info("Setting temperature to %s", temperature)
-        self._temperature = temperature
+        logging.info("Setting temperature for %s to %s", self._name, temperature)
+        self._attr_current_temperature = temperature
         self.schedule_update_ha_state()
+        self.async_write_ha_state()
         # Here you would add the code to send the new temperature to your device
+
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        """Set new target HVAC mode."""
+        logging.info("Setting HVAC mode to %s", hvac_mode)
+        self._attr_hvac_mode = hvac_mode
+        self.schedule_update_ha_state()
+        self.async_write_ha_state()
+        # Here you would add the code to send the new HVAC mode to your device
